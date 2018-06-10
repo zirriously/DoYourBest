@@ -12,12 +12,14 @@ using Newtonsoft.Json.Linq;
 
 namespace DoYourBest
 {
-    class Program
+    class DoYourBest
     {
         private DiscordSocketClient _client;
         private string _token;
+        private string _apiKey;
+        private const string ImgurRegex = @"https?://i\.imgur\.com/\w+\.(gifv|mp4)";
 
-        static void Main() => new Program().MainAsync().GetAwaiter().GetResult();
+        private static void Main() => new DoYourBest().MainAsync().GetAwaiter().GetResult();
 
         public async Task MainAsync()
         {
@@ -29,6 +31,20 @@ namespace DoYourBest
             _client.Log += Log;
             _client.MessageReceived += MessageReceived;
 
+            var vars = JsonConvert.DeserializeObject<dynamic>(File.ReadAllText(@".\vars.json"));
+            _token = vars.token;
+            _apiKey = vars.apikey;
+
+
+            await _client.LoginAsync(TokenType.Bot, _token);
+            await _client.StartAsync();
+
+            _client.Ready += () =>
+            {
+                Log(new LogMessage(LogSeverity.Info, "Client",
+                    $"Logged in succesfully as {_client.CurrentUser.Username}"));
+                return Task.CompletedTask;
+            };
 
             await Task.Delay(Timeout.Infinite);
         }
